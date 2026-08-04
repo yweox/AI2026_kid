@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>어린이 맞춤형 스쿨존 등하교 안심 보행 지도 (SafeKids Zone)</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet & MarkerCluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  
+  <!-- Custom Core Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background: #FFFDF0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:99999;">
+    <div style="font-size: 60px; animation: bounce 1s infinite alternate;">🎒</div>
+    <h2 style="font-size: 1.4rem; font-weight:800; color:#FFB703; margin-top:16px;">전국 어린이보호구역 데이터 분석 중...</h2>
+    <p style="font-size: 0.9rem; color:#6C757D; margin-top:8px;">EUC-KR 표준 데이터를 파싱하고 있습니다.</p>
+  </div>
+  <style>
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+  </style>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="app-branding">
+      <div class="brand-icon">
+        <i class="fas fa-shield-cat" style="color:white;"></i>
+      </div>
+      <div class="brand-title">
+        <h1>
+          아이안심 스쿨존
+          <span class="brand-badge">MVP</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- Mode Switcher Toggle -->
+    <div class="mode-switcher">
+      <button id="btn-mode-kid" class="mode-btn active">
+        <i class="fas fa-child-reaching"></i> 어린이 모드
+      </button>
+      <button id="btn-mode-parent" class="mode-btn">
+        <i class="fas fa-user-shield"></i> 학부모 모드
+      </button>
+    </div>
+
+    <!-- Quick Search -->
+    <div class="header-actions">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-input" placeholder="학교명, 주소 검색...">
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================
+       학부모 모드 잠금 PIN 패드 모달
+  ============================================ -->
+  <div id="pin-lock-modal" class="pin-lock-overlay">
+    <div class="pin-lock-card">
+      <div class="pin-lock-icon">🔐</div>
+      <h2 class="pin-lock-title">학부모 모드</h2>
+      <p class="pin-lock-desc">4자리 비밀번호를 입력해 주세요</p>
+
+      <!-- PIN Dots -->
+      <div class="pin-dots-row" id="pin-dots-row">
+        <div class="pin-dot" id="pd-0"></div>
+        <div class="pin-dot" id="pd-1"></div>
+        <div class="pin-dot" id="pd-2"></div>
+        <div class="pin-dot" id="pd-3"></div>
+      </div>
+
+      <!-- Error message -->
+      <div id="pin-error-msg" class="pin-error-msg"></div>
+
+      <!-- Keypad -->
+      <div class="pin-keypad">
+        <button class="pin-key" data-digit="1">1</button>
+        <button class="pin-key" data-digit="2">2</button>
+        <button class="pin-key" data-digit="3">3</button>
+        <button class="pin-key" data-digit="4">4</button>
+        <button class="pin-key" data-digit="5">5</button>
+        <button class="pin-key" data-digit="6">6</button>
+        <button class="pin-key" data-digit="7">7</button>
+        <button class="pin-key" data-digit="8">8</button>
+        <button class="pin-key" data-digit="9">9</button>
+        <button class="pin-key pin-key-del" id="pin-key-del">⌫</button>
+        <button class="pin-key" data-digit="0">0</button>
+        <button class="pin-key pin-key-cancel" id="pin-key-cancel">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Workspace Container -->
+  <main class="app-container">
+
+    <!-- Leaflet Map Viewport -->
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
+
+    <!-- Kid Mode Side Panel -->
+    <aside id="kid-side-panel" class="kid-side-panel">
+      <!-- Status Card -->
+      <div id="kid-status-card" class="kid-status-card in-zone">
+        <div id="kid-status-avatar" class="status-avatar">🛡️</div>
+        <div id="kid-status-title" class="status-title">안전한 스쿨존 안이에요!</div>
+        <div id="kid-status-desc" class="status-desc">내 주변 어린이보호구역 범위 감지 중...</div>
+      </div>
+
+      <!-- Simulation Controls -->
+      <div class="sim-controls-card">
+        <h3><i class="fas fa-gamepad" style="color:#FFB703;"></i> 등하교 위치 시뮬레이터</h3>
+        <p style="font-size:0.8rem; color:#64748B; margin-bottom:12px;">가상으로 스쿨존 진입 및 이탈 상황을 시뮬레이션해 보세요.</p>
+        <div class="sim-btn-group">
+          <button id="sim-btn-enter" class="sim-btn enter">
+            <i class="fas fa-walking"></i> 스쿨존 진입
+          </button>
+          <button id="sim-btn-exit" class="sim-btn exit">
+            <i class="fas fa-running"></i> 안전구역 이탈
+          </button>
+        </div>
+      </div>
+
+      <!-- Quest & Points Card -->
+      <div class="quest-card">
+        <div class="quest-header">
+          <div class="quest-title">오늘의 등교 퀘스트</div>
+          <div id="badge-count-text" class="badge-count">💰 250pt</div>
+        </div>
+        <p id="quest-desc-text" class="quest-desc">등교 퀘스트를 성공하고 포인트 상자를 오픈하세요!</p>
+
+        <!-- Quest Action Button -->
+        <button id="quest-action-btn" class="quest-action-btn">
+          🎒 등교 완료! (+100pt 획득)
+        </button>
+      </div>
+
+      <!-- Point Milestone Gauge Bar (퀘스트 카드 바로 아래, 독립 블록) -->
+      <div class="milestone-outer-card">
+        <div class="milestone-label-row">
+          <span>🎁 보물상자 리워드 게이지</span>
+          <span class="milestone-hint">상자를 터치해 열기!</span>
+        </div>
+        <div class="milestone-track-wrapper">
+          <div class="milestone-track-bg"></div>
+          <div id="milestone-gauge-fill" class="milestone-track-fill"></div>
+          <div id="milestone-nodes-container" class="milestone-nodes">
+            <!-- Dynamically filled by questEngine.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Open Collection Popup Modal Button -->
+      <button id="open-collection-btn" class="open-collection-btn">
+        <i class="fas fa-paw"></i>
+        <span>🐾 내 동물 스티커 도감 구경하기</span>
+        <span id="collection-badge-count" class="collection-badge-count">2/8</span>
+      </button>
+
+    </aside>
+
+    <!-- Parent Mode Side Panel (Hidden by default) -->
+    <aside id="parent-side-panel" class="parent-side-panel" style="display: none;">
+      <h2 style="font-size: 1.15rem; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+        <i class="fas fa-chart-pie" style="color:var(--parent-accent);"></i> 스쿨존 관제 대시보드
+      </h2>
+
+      <!-- Statistics Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">전국 스쿨존 수</div>
+          <div id="stat-total-zones" class="stat-value">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CCTV 설치 구역</div>
+          <div id="stat-installed-cctv" class="stat-value safe">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CCTV 설치율</div>
+          <div id="stat-cctv-rate" class="stat-value safe">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CCTV 미설치 구역</div>
+          <div id="stat-missing-cctv" class="stat-value danger">-</div>
+        </div>
+      </div>
+
+      <!-- Danger Zone (CCTV Missing) List -->
+      <div class="danger-list-container">
+        <div class="danger-list-header">
+          <h3><i class="fas fa-triangle-exclamation"></i> 위험구역 리스트 (CCTV 미설치)</h3>
+          <span id="danger-list-count" class="danger-count-badge">0개소</span>
+        </div>
+        <div id="danger-zone-scroll" class="danger-list-scroll">
+          <!-- Dynamically filled by ParentMode.js -->
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Warning Alarm Modal -->
+  <div id="warning-modal" class="modal-backdrop">
+    <div class="warning-modal-box">
+      <div class="warning-icon-wrapper">
+        <i class="fas fa-bell"></i>
+      </div>
+      <h2>안전구역을 벗어났어요!</h2>
+      <p>현재 스쿨존(어린이보호구역) 경계를 이탈하였습니다.<br>주변 차량 및 보행 안전에 각별히 주의하세요!</p>
+      <button id="warning-modal-close" class="modal-close-btn">
+        확인하였습니다
+      </button>
+    </div>
+  </div>
+
+  <!-- Treasure Box Reward Modal -->
+  <div id="reward-modal" class="modal-backdrop">
+    <div class="reward-modal-box">
+      <div class="unlocked-sticker-display">
+        <div id="unlocked-emoji" class="unlocked-emoji">🐱</div>
+        <h3 id="unlocked-title" class="unlocked-title">[일반] 아기 고양이 획득!</h3>
+        <p id="unlocked-tip" class="unlocked-tip">💡 팁: "길을 건널 때 좌우를 꼭 살피며 걸어가요!"</p>
+      </div>
+      <button id="reward-modal-close" class="modal-close-btn" style="background: linear-gradient(135deg, #A855F7, #7E22CE); margin-top:10px;">
+        🎉 도감에 저장하기
+      </button>
+    </div>
+  </div>
+
+  <!-- Animal Collection Popup Modal Window (도감 팝업창) -->
+  <div id="collection-modal" class="modal-backdrop">
+    <div class="collection-modal-box">
+      <div class="collection-modal-header">
+        <h2><i class="fas fa-paw" style="color:#A855F7;"></i> 내 동물 스티커 도감</h2>
+        <span id="modal-progress-badge" class="modal-progress-badge">2 / 8 수집 완료</span>
+      </div>
+      <div id="collection-grid-modal" class="collection-grid-container">
+        <!-- Dynamically filled by questEngine.js -->
+      </div>
+      <button id="collection-modal-close" class="modal-close-btn" style="background: #334155; margin-top:16px;">
+        닫기
+      </button>
+    </div>
+  </div>
+
+  <!-- CDN Dependencies -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- Application Modules -->
+  <script src="js/csvParser.js"></script>
+  <script src="js/mapEngine.js"></script>
+  <script src="js/kidMode.js"></script>
+  <script src="js/parentMode.js"></script>
+  <script src="js/questEngine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
