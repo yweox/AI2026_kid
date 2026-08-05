@@ -31,11 +31,10 @@ window.MapEngine = (function () {
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // 1. 🎮 어린이용 SD/게임 스타일 지돈 (Stadia OSM Bright)
-    //    선명한 색상, 깨끔한 라인, 사실고 사타일이 없는 SD/만화 콤 지돈
-    kidTileLayer = L.tileLayer('https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png', {
-      maxZoom: 20,
-      attribution: 'Map tiles by <a href="https://stadiamaps.com">Stadia Maps</a> | Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | SafeKids'
+    // 1. 🎮 어린이용 표준 지도 타일 (OpenStreetMap Standard)
+    kidTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | SafeKids'
     });
 
     // 2. 🛡️ 학부모용 시인성 높은 시원한 지도 타일 (CartoDB Voyager)
