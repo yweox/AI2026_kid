@@ -31,10 +31,10 @@ window.MapEngine = (function () {
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // 1. 🎮 어린이용 표준 지도 타일 (OpenStreetMap Standard)
-    kidTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // 1. 🎮 어린이용 지도 타일 (CartoDB Voyager - 학부모 모드와 동일)
+    kidTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | SafeKids'
+      attribution: '© OpenStreetMap contributors © CARTO | SafeKids Map'
     });
 
     // 2. 🛡️ 학부모용 시인성 높은 시원한 지도 타일 (CartoDB Voyager)
