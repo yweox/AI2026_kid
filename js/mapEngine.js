@@ -38,8 +38,8 @@ window.MapEngine = (function () {
       attribution: 'Map tiles by <a href="https://stadiamaps.com">Stadia Maps</a> | Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | SafeKids'
     });
 
-    // 2. 🛡️ 학부모용 다크 슬레이트 지도 타일 (CartoDB Dark Matter)
-    parentTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // 2. 🛡️ 학부모용 시인성 높은 시원한 지도 타일 (CartoDB Voyager)
+    parentTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors © CARTO | SafeKids Map'
     });
@@ -87,11 +87,6 @@ window.MapEngine = (function () {
       if (parentTileLayer) parentTileLayer.addTo(map);
       if (mapContainer) mapContainer.classList.remove('kid-map-theme');
       if (mapContainer) mapContainer.classList.add('parent-map-theme');
-    }
-
-    // Re-render markers to update theme styling
-    if (allZonesData.length > 0) {
-      renderZoneMarkers(allZonesData);
     }
   }
 

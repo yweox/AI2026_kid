@@ -73,8 +73,15 @@ window.QuestEngine = (function () {
     if (collectionBadgeCount) collectionBadgeCount.textContent = `${state.unlockedStickers.length}/${ANIMAL_STICKERS.length}`;
 
     // Update Milestone Progress Gauge Bar Width
-    const maxPt = MILESTONES[MILESTONES.length - 1];
-    const fillPercent = Math.min(100, (state.points / maxPt) * 100);
+    // Milestone nodes (100pt~500pt) mapped at: 100pt(0%), 200pt(25%), 300pt(50%), 400pt(75%), 500pt(100%)
+    const minPt = MILESTONES[0]; // 100
+    const maxPt = MILESTONES[MILESTONES.length - 1]; // 500
+    let fillPercent = 0;
+    if (state.points <= minPt) {
+      fillPercent = 0;
+    } else {
+      fillPercent = Math.min(100, ((state.points - minPt) / (maxPt - minPt)) * 100);
+    }
     const gaugeFill = document.getElementById('milestone-gauge-fill');
     if (gaugeFill) gaugeFill.style.width = `${fillPercent}%`;
 

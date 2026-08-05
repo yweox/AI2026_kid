@@ -56,48 +56,12 @@
     <div class="header-actions">
       <div class="search-box">
         <i class="fas fa-search"></i>
-        <input type="text" id="search-input" placeholder="학교명, 주소 검색...">
+        <input type="text" id="search-input" placeholder="학교명, 주소 검색..." autocomplete="off">
+        <div id="search-dropdown" class="search-dropdown"></div>
       </div>
     </div>
   </header>
 
-  <!-- ============================================
-       학부모 모드 잠금 PIN 패드 모달
-  ============================================ -->
-  <div id="pin-lock-modal" class="pin-lock-overlay">
-    <div class="pin-lock-card">
-      <div class="pin-lock-icon">🔐</div>
-      <h2 class="pin-lock-title">학부모 모드</h2>
-      <p class="pin-lock-desc">4자리 비밀번호를 입력해 주세요</p>
-
-      <!-- PIN Dots -->
-      <div class="pin-dots-row" id="pin-dots-row">
-        <div class="pin-dot" id="pd-0"></div>
-        <div class="pin-dot" id="pd-1"></div>
-        <div class="pin-dot" id="pd-2"></div>
-        <div class="pin-dot" id="pd-3"></div>
-      </div>
-
-      <!-- Error message -->
-      <div id="pin-error-msg" class="pin-error-msg"></div>
-
-      <!-- Keypad -->
-      <div class="pin-keypad">
-        <button class="pin-key" data-digit="1">1</button>
-        <button class="pin-key" data-digit="2">2</button>
-        <button class="pin-key" data-digit="3">3</button>
-        <button class="pin-key" data-digit="4">4</button>
-        <button class="pin-key" data-digit="5">5</button>
-        <button class="pin-key" data-digit="6">6</button>
-        <button class="pin-key" data-digit="7">7</button>
-        <button class="pin-key" data-digit="8">8</button>
-        <button class="pin-key" data-digit="9">9</button>
-        <button class="pin-key pin-key-del" id="pin-key-del">⌫</button>
-        <button class="pin-key" data-digit="0">0</button>
-        <button class="pin-key pin-key-cancel" id="pin-key-cancel">취소</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Main Workspace Container -->
   <main class="app-container">
